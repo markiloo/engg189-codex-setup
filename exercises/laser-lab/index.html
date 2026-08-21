@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laser Lab</title>
+  <link rel="stylesheet" href="laser-lab.css?v=20260818-3">
+</head>
+<body>
+  <main id="laser-lab" class="lab-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <p class="eyebrow">ENGG189 / GEOMETRIC OPTICS</p>
+          <h1>Laser Lab</h1>
+        </div>
+      </div>
+      <div class="toolbar" aria-label="Simulation controls">
+        <label class="live-toggle" for="live-trace">
+          <input id="live-trace" type="checkbox" checked>
+          <span class="live-toggle-box" aria-hidden="true"></span>
+          <span>Live rays</span>
+        </label>
+        <button class="tool-button" data-action="reset" title="Reset scene">Reset</button>
+        <button class="tool-button tool-button-primary" data-action="trace" title="Trace rays">Trace rays</button>
+      </div>
+    </header>
+
+    <div class="lab-layout">
+      <aside class="panel palette" aria-label="Experiment palette">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">ADD</p>
+            <h2>Optical element</h2>
+          </div>
+        </div>
+        <p class="panel-copy">Place a component on the table. The view is entirely top-down.</p>
+
+        <div class="palette-section">
+          <p class="section-label">Add component</p>
+          <div class="component-grid">
+            <button class="component-card" data-add="laser">
+              <span class="component-icon laser-icon" aria-hidden="true"></span>
+              <span>Laser</span>
+            </button>
+            <button class="component-card" data-add="mirror">
+              <span class="component-icon mirror-icon" aria-hidden="true"></span>
+              <span>Mirror</span>
+            </button>
+            <button class="component-card component-card-muted" data-add="target">
+              <span class="component-icon target-icon" aria-hidden="true"></span>
+              <span>Target</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="bench-panel" aria-label="Top-down optical table">
+        <div class="bench-header">
+          <div>
+            <p class="eyebrow">LIVE SCENE</p>
+            <h2>Bench / <span id="scene-label">default reflection</span></h2>
+          </div>
+        </div>
+        <div class="bench-frame">
+          <svg id="bench" viewBox="0 0 960 540" role="img" aria-label="Top-down optical bench. Select and drag components." tabindex="0">
+            <defs>
+              <pattern id="bench-grid" width="48" height="48" patternUnits="userSpaceOnUse">
+                <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(143, 181, 204, 0.12)" stroke-width="1"/>
+                <circle cx="24" cy="24" r="2" fill="rgba(143, 181, 204, 0.16)"/>
+              </pattern>
+              <filter id="ray-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <radialGradient id="laser-aura">
+                <stop offset="0" stop-color="#ff4054" stop-opacity="0.55"/>
+                <stop offset="0.45" stop-color="#ff4054" stop-opacity="0.22"/>
+                <stop offset="1" stop-color="#ff4054" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect class="bench-surface" x="0" y="0" width="960" height="540" rx="18"/>
+            <rect class="bench-grid" x="0" y="0" width="960" height="540" rx="18" fill="url(#bench-grid)"/>
+            <g id="beam-effects" aria-hidden="true"></g>
+            <g id="beam-core" aria-hidden="true"></g>
+            <g id="optical-elements"></g>
+            <g id="selection-layer" aria-hidden="true"></g>
+          </svg>
+          <div class="bench-tip"><span class="tip-key">Drag</span> move&nbsp;&nbsp; <span class="tip-key">← ↑ ↓ →</span> nudge&nbsp;&nbsp; <span class="tip-key">Q / E</span> rotate</div>
+        </div>
+        <div class="bench-legend" aria-label="Ray legend">
+          <span><i class="legend-swatch legend-ray"></i> active ray</span>
+          <span><i class="legend-swatch legend-element"></i> optical element</span>
+          <span><i class="legend-swatch legend-target"></i> target</span>
+        </div>
+      </section>
+
+      <aside class="panel inspector" id="inspector" aria-label="Inspector">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">INSPECTOR</p>
+            <h2 id="inspector-title">No selection</h2>
+          </div>
+          <span class="inspector-index" id="inspector-index">—</span>
+        </div>
+        <div id="inspector-content" class="inspector-content">
+          <p class="empty-state">Select a laser, mirror, or target on the bench to inspect its parameters.</p>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+
+  <script src="src/geometry.js"></script>
+  <script src="src/scene.js"></script>
+  <script src="src/trace.js"></script>
+  <script src="src/render.js?v=20260818-3"></script>
+  <script src="src/interaction.js"></script>
+  <script src="src/app.js?v=20260818-3"></script>
+</body>
+</html>

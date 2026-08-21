@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Laser Lab tests</title>
+  <style>body{margin:0;padding:24px;background:#08131f;color:#e7f1f6;font:16px system-ui,sans-serif}main{max-width:760px;margin:auto}li{margin:8px 0;padding:8px;border-radius:6px;background:#122437}li.pass{color:#70e2ad}li.fail{color:#ff8b98}code{color:#8edfff}</style>
+</head>
+<body>
+  <main>
+    <h1>Laser Lab browser tests</h1>
+    <p id="summary">Running…</p>
+    <ol id="results"></ol>
+    <iframe id="app-fixture" title="Laser Lab app fixture" src="../index.html" hidden></iframe>
+  </main>
+  <script src="../src/geometry.js"></script>
+  <script src="../src/scene.js"></script>
+  <script src="../src/trace.js"></script>
+  <script>
+    (function () {
+      var G = window.LaserLabGeometry, S = window.LaserLabScene, T = window.LaserLabTrace;
+      var results = document.getElementById("results"); var total = 0; var passed = 0;
+      function assert(condition, message) { if (!condition) throw new Error(message); }
+      function near(actual, expected, tolerance) { assert(Math.abs(actual - expected) <= tolerance, actual + " was not within " + tolerance + " of " + expected); }
+      function test(name, fn) { total += 1; var item = document.createElement("li"); item.textContent = name; try { fn(); passed += 1; item.className = "pass"; item.textContent += " — PASS"; } catch (error) { item.className = "fail"; item.textContent += " — FAIL: " + error.message; } results.appendChild(item); }
+      test("normalizes a vector", function () { var value = G.normalize({ x: 3, y: 4 }); near(value.x, 0.6, 1e-9); near(value.y, 0.8, 1e-9); });
+      test("finds a forward ray-segment intersection", function () { var hit = G.raySegmentIntersection({ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 5, y: -2 }, { x: 5, y: 2 }); assert(hit && hit.distance === 5, "expected hit at distance 5"); });
+      test("rejects a ray pointing away from a segment", function () { var hit = G.raySegmentIntersection({ x: 0, y: 0 }, { x: -1, y: 0 }, { x: 5, y: -2 }, { x: 5, y: 2 }); assert(hit === null, "expected no hit"); });
+      test("reflects a horizontal ray upward from a 45 degree mirror", function () { var value = G.reflect({ x: 1, y: 0 }, { x: Math.SQRT1_2, y: Math.SQRT1_2 }); near(value.x, 0, 1e-9); near(value.y, -1, 1e-9); });
+      test("validates the default scene", function () { assert(S.validateScene(S.createDefaultScene()).ok, "default scene should be valid"); });
+      test("traces a default reflection into the target", function () { var result = T.traceScene(S.createDefaultScene()); assert(result.rayCount >= 2, "expected at least two segments"); assert(result.targetHitCount === 1, "expected one target hit"); });
+      test("selects the nearest mirror independent of array order", function () { var scene = S.createDefaultScene(); scene.elements.push({ id: "mirror-near", kind: "mirror", center: { x: 250, y: 270 }, angleRad: -Math.PI / 4, length: 80 }); var result = T.traceScene(scene); assert(result.segments[0].elementId === "mirror-near", "nearest mirror should be hit first"); });
+      function updateSummary() { document.getElementById("summary").textContent = passed + " / " + total + " tests passed"; }
+      document.getElementById("app-fixture").addEventListener("load", function () {
+        var appText = document.getElementById("app-fixture").contentDocument.body.textContent.toLowerCase();
+        test("keeps repository-only instructions and controls out of the simulator", function () {
+          assert(appText.indexOf("student task") === -1, "student task copy should stay in the repo docs");
+          assert(appText.indexOf("lens later") === -1, "lens placeholder should stay in the repo docs");
+          assert(appText.indexOf("run tests") === -1, "test navigation should stay in the repo docs");
+        });
+        test("keeps the optical table free of status-dashboard chrome", function () {
+          var appDocument = document.getElementById("app-fixture").contentDocument;
+          assert(!appDocument.querySelector(".statusbar"), "status footer should not compete with the table");
+          assert(!appDocument.querySelector(".bench-readout"), "ray-count readout should not compete with the table");
+          assert(!appDocument.querySelector(".live-dot"), "ready indicator should not compete with the table");
+        });
+        test("keeps element creation and live-ray control visible", function () {
+          var appDocument = document.getElementById("app-fixture").contentDocument;
+          assert(appDocument.querySelectorAll("[data-add]").length >= 3, "laser, mirror, and target controls should be visible");
+          var toggle = appDocument.querySelector("#live-trace");
+          assert(toggle && toggle.type === "checkbox", "live-ray toggle should be a checkbox");
+          assert(toggle.checked, "live-ray tracing should start enabled");
+        });
+        test("uses one radius language for the main surfaces", function () {
+          var appDocument = document.getElementById("app-fixture").contentDocument;
+          var surfaces = [".topbar", ".palette", ".bench-panel", ".inspector"].map(function (selector) { return appDocument.querySelector(selector); });
+          var radius = getComputedStyle(surfaces[0]).borderRadius;
+          surfaces.forEach(function (surface) { assert(getComputedStyle(surface).borderRadius === radius, "surface radii should be consistent"); });
+        });
+        test("shows the target hit state and a direction-independent laser aura", function () {
+          var appDocument = document.getElementById("app-fixture").contentDocument;
+          var target = appDocument.querySelector('[data-element-id="target-1"]');
+          assert(target && target.classList.contains("is-hit"), "default target should show a hit state");
+          assert(target.querySelector(".target-hit-label"), "hit target should have a visible hit label");
+          assert(appDocument.querySelector('[data-element-id="laser-1"] .laser-aura'), "laser should render an explicit aura");
+        });
+        updateSummary();
+      });
+      updateSummary();
+    })();
+  </script>
+</body>
+</html>
