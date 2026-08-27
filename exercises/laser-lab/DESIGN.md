@@ -1,3 +1,6 @@
+
+AUTHOR: MARC IGNACIO
+
 # Laser Lab design record
 
 This file is student-authored. Codex may help compare options, but the student chooses the architecture.
@@ -228,23 +231,103 @@ trace → render.js draws SVG
 The primary state variable is scene; the calculated
 optical result is stored separately in trace.
 
-### Option A
+### Option A: Centralized application store
 
-Describe it:
+Keep one authoritative scene variable in app.js. All user
+actions call app-level functions such as move, rotate,
+select, and remove. Those functions update the scene
+through Scene.updateElement, then retrace and rerender.
+
+interaction.js
+    → app.js action
+    → scene.js immutable update
+    → trace.js
+    → render.js
+
+Advantages:
+
+- Simple and easy to understand.
+- Keeps interaction, state, tracing, and rendering
+separate.
+
+- Fits the current code structure.
+- Easy to add undo/reset behavior later.
 
 Trade-offs:
 
-### Option B
+- app.js can become large as more element types and
+actions are added.
 
-Describe it:
+- Actions are passed around manually.
+- Testing updates may require setting up the application
+layer.
+
+### Option B: Reducer-based state updates
+
+Represent every user action as an action object, then
+send it to one reducer function:
+
+```javascript
+scene = reducer(scene, {
+type: "MOVE_ELEMENT",
+id: "mirror-1",
+delta: { x: 2, y: 0 }
+}); → render.js
+```
+
+Advantages:
+
+- All state transitions are centralized and explicit.
+- Easier to test state changes independently.
+- Makes undo/redo, action logging, and replay easier.
+- Scales better when the number of interactions grows. sufficient for lasers, mirrors, targets, dragging, keyboard controls, and reset behavior. A reducer would become more useful if the simulator later gained undo/redo, many element types, or complex multi-step updates.
 
 Trade-offs:
+
+- Requires more code: action objects, dispatch, and a reducer.
+
+- The update path is less direct and may be harder for beginners to follow.
+
+- Every action needs a defined format and type.
+- A large reducer can become difficult to maintain.
+- Small changes may require editing multiple places.
+- It may be unnecessary complexity for this small simulator.
 
 ### Decision
 
-I choose:
+I choose: **Option B: Reducer-based state updates**
 
-Reason:
+Reason: This is my choice because it scales better when the number of possible interactions with the scene grows. This is because with a reducer-based approach I can add action types such as:
+
+```
+  { type: "MOVE_ELEMENT", id, delta }
+  { type: "ROTATE_ELEMENT", id, angle }
+  { type: "ADD_ELEMENT", kind }
+  { type: "REMOVE_ELEMENT", id }
+  { type: "SET_LENS_FOCAL_LENGTH", id, value }
+
+```
+
+This is much better than adding many urelated update function. This means that the reducer becomes the single place that I need to edit in order to define how each action changes a state.
+
+Hence, while the complexity of the implementation is becomes a little more complex the following benefits are obtained:
+- since actions are isolated, the code becomes easier to test
+- log and replay user action can be implemented
+- pointer controls, keyboard controls, and inspector controls can remain consistent
+- new elements can be added without creating state-management patterns
+
+An action such as:
+
+```
+{
+type: "MOVE_ELEMENT",
+id: "mirror-1",
+delta: { x: 10, y: 0 }
+}
+```
+
+would be independed from the interaction that invoked it. It would not matter is a keyboard or mouse called the action, only the action invoked would matter for updating the scene.
+
 
 ## Rendering and interaction
 
@@ -257,7 +340,7 @@ How will simulation state, SVG rendering, and pointer input remain separate?
 
 - Screenshot or observation:
 
-- Commit:
+- Commit: laser-lab: record architecture decision
 
 ## Revision log
 
