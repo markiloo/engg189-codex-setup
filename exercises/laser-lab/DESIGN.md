@@ -121,10 +121,10 @@ function setScene(next, shouldTrace) {
 * **For, keyboard controls**
     1. Arrow keys move the selected elements
     2. Shift makes movement larger.
-    3. Q and rotate the selected element
+    3. Q and E rotate the selected element
     4. Delete and Backspace remove the item
 
-The selected eleent is queries by calling 
+The selected element queries by calling:
 
 ```javascript
 scene.selectedId
@@ -337,12 +337,17 @@ delta: { x: 10, y: 0 }
 }
 ```
 
-would be independed from the interaction that invoked it. It would not matter is a keyboard or mouse called the action, only the action invoked would matter for updating the scene.
-
+would be independent from the interaction that invoked it. It would not matter if it is a keyboard or mouse that called the action, only the action invoked would matter for updating the scene.
 
 ## Rendering and interaction
 
 How will simulation state, SVG rendering, and pointer input remain separate?
+
+Simulation state, SVG rendering, and pointer input are strictly separated through a unidirectional data flow:
+1. **Pointer & Keyboard Input (`interaction.js`):** Listens to DOM/SVG events and translates raw input into semantic intent/actions without mutating state directly or performing geometric optics calculations.
+2. **Simulation State (`scene.js` / `app.js`):** Holds the authoritative immutable scene model. It updates element properties purely in response to actions and produces a new scene state.
+3. **Ray Tracing Pipeline (`trace.js`):** Takes a snapshot of the scene state and computes optical ray paths, intersections, and hit records purely as data structures with no DOM or rendering dependencies.
+4. **SVG Rendering (`render.js`):** Receives the scene and trace data purely as read-only inputs to update the SVG DOM. It has no internal simulation state and performs no physics calculations.
 
 ## Evidence
 
