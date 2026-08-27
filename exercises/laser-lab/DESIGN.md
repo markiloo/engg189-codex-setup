@@ -37,6 +37,17 @@ This file is student-authored. Codex may help compare options, but the student c
     - **External Runtime/ Build dependencies**
         - No npm packages. Vanilla HTML, CSS, and JS was used to make the slice browser-native.
 
+Non-goals:
+  Non-goals for this task are lenses, refraction, point-
+  source ray bundles,
+  generalized optics abstractions, undo/redo, external
+  dependencies, and
+  production-code changes. This task only documents the
+  existing architecture,
+  compares state/update options, and records one design
+  decision while preserving
+  the baseline behavior.
+
 ## State representation
 
 ### State stored in the scene
@@ -335,10 +346,11 @@ How will simulation state, SVG rendering, and pointer input remain separate?
 
 ## Evidence
 
-- Gate or task: Task 1
+- Gate or task: **Task 1**
 - Browser test page and result:
+![My Screenshot](./screenshots/Task1Test.png)
 
-- Screenshot or observation:
+- Screenshot or observation: No code was changed in this task. Hence, the tests should remain unchanged as expected.
 
 - Commit: laser-lab: record architecture decision
 
