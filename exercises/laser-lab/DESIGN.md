@@ -36,7 +36,197 @@ This file is student-authored. Codex may help compare options, but the student c
 
 ## State representation
 
+### State stored in the scene
 
+The main simulator state is stored in the scene variable in src/app.js:
+
+```javascript
+var scene = S.createDefaultScene();
+```
+
+It contains:
+
+```javascript
+{
+    schemaVersion,
+    bounds,
+    elements,
+    selectedId
+}
+```
+
+ In line with this, the individual lasers, mirrors, and targets are stored in:
+
+```javascript
+scene.elements
+```
+
+The selected element is then identified with the attribute
+
+```javascript
+scene.selectedId
+```
+
+Each element has it's own properties such as:
+* position
+* angle
+* length
+* radius
+* wavelength
+* intensity
+
+Scene changes use functions such as:
+* S.updateElement
+* S.addElement
+* S.removeElement
+
+Since, the variable for the scene is immutable. These clone the scene
+and return a new version. Then, app.js replaces the current
+state through:
+
+```javascript
+function setScene(next, shouldTrace) {
+    scene = next;
+    redraw(shouldTrace !== false);
+}
+```
+
+### How pointer and keyboard input become scene updates
+
+ *src/interaction.js* receives pointer and keyboard events from the SVG bench.
+
+* **For pointer dragging:**
+  1. pointerdown finds the element ID from its data- element-id.
+  2. The pointer position is converted to world coordinates.
+  3. actions.select(id) selects the element.
+  4. pointermove calculates the movement delta.
+  5. actions.move(id, delta) sends the update to app.js.
+  6. app.js calls S.updateElement(scene, id, patch).
+  7. setScene replaces scene and redraws the simulator.
+
+* **For, keyboard controls**
+    1. Arrow keys move the selected elements
+    2. Shift makes movement larger.
+    3. Q and rotate the selected element
+    4. Delete and Backspace remove the item
+
+The selected eleent is queries by calling 
+
+```javascript
+scene.selectedId
+```
+
+### How rays are represented and traced
+
+The calculated ray result is stored in the trace variable
+in src/app.js:
+
+```javascript
+var trace = T.traceScene(scene);
+```
+
+src/trace.js creates one ray for each enabled laser in
+scene.elements.
+
+Each ray has the following properties:
+- origin: laser.position
+- direction: calculated from laser.angleRad
+
+The scene tracer checks the table boundary, mirrors, and targets. It chooses the nearest intersection, then stores each ray section in:
+
+```javascript
+trace.segments
+```
+
+Each segment contains:
+```
+{
+    from,
+    to,
+    wavelengthNm,
+    intensity,
+    terminatedBy,
+    elementId
+}
+```
+
+Mirror hits cause the ray direction to be reflected. The ray continues until it reaches a target, the boundary, or the maximum bounce count.
+
+Meanwhile, other tracing results are stored in:
+- trace.hits
+- trace.rayCount
+- trace.targetHitCount
+
+### Separation between tracing and SVG rendering
+
+src/trace.js handles the geometry and optics. It returns data and does not create SVG elements.
+
+src/render.js receives the scene and trace objects through:
+
+R.renderBench(svg, scene, trace);
+
+It converts that data into SVG elements such as:
+
+- beam lines and glow effects;
+- laser graphics;
+- mirror graphics;
+- target graphics;
+- target hit effects;
+- selection outlines.
+
+The overall flow is:
+
+scene → trace → render
+
+app.js coordinates the process:
+
+scene state → T.traceScene(scene) → R.renderBench(svg,
+scene, trace)
+
+### Where the tests observe behavior
+
+The tests are in tests/index.html.
+
+They directly test the geometry, scene, and tracing
+modules:
+
+- LaserLabGeometry
+- LaserLabScene
+- LaserLabTrace
+
+They check:
+
+- vector normalization;
+- ray/segment intersections;
+- rejection of backward rays;
+- reflection direction;
+- default scene validation;
+- reflection into the target;
+- nearest-mirror selection.
+
+The tests also load the simulator in a hidden iframe and inspect its actual DOM. They verify:
+
+- instructions are kept outside the simulator;
+- unwanted dashboard elements are absent;
+- element creation controls are visible;
+- the live-trace checkbox exists and starts enabled;
+- surface corner radii are consistent;
+- the default target displays a hit;
+- the laser displays an aura.
+
+In short:
+
+```
+Scene interaction → app.js updates scene → trace.js calculates
+```
+
+Then,
+``` 
+trace → render.js draws SVG
+```
+
+The primary state variable is scene; the calculated
+optical result is stored separately in trace.
 
 ### Option A
 
@@ -62,9 +252,11 @@ How will simulation state, SVG rendering, and pointer input remain separate?
 
 ## Evidence
 
-- Gate or task:
+- Gate or task: Task 1
 - Browser test page and result:
+
 - Screenshot or observation:
+
 - Commit:
 
 ## Revision log
