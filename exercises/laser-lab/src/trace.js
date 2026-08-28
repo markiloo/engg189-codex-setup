@@ -28,9 +28,21 @@
     return G.normalize(G.subtract(focalPoint, point));
   }
 
+  function pointSourceRays(source) {
+    var count = Math.max(3, Math.min(7, Math.floor(source.rayCount || 5)));
+    var spread = Number(source.spreadRad) || 0;
+    var rays = [];
+    for (var index = 0; index < count; index += 1) {
+      var fraction = count === 1 ? 0 : index / (count - 1) * 2 - 1;
+      rays.push({ sourceId: source.id, rayIndex: index, origin: { x: source.position.x, y: source.position.y }, direction: G.fromAngle(source.angleRad + fraction * spread), wavelengthNm: source.wavelengthNm, intensity: source.intensity });
+    }
+    return rays;
+  }
+
   T.mirrorEndpoints = endpoints;
   T.lensEndpoints = lensEndpoints;
   T.lensDirection = lensDirection;
+  T.pointSourceRays = pointSourceRays;
   T.traceScene = function (scene, options) {
     options = options || {};
     var maxBounces = options.maxBounces == null ? 8 : options.maxBounces;
@@ -38,13 +50,16 @@
     var segments = [];
     var hits = [];
     var lasers = scene.elements.filter(function (element) { return element.kind === "laser" && element.enabled !== false; });
+    var pointSources = scene.elements.filter(function (element) { return element.kind === "point-source" && element.enabled !== false; });
     var mirrors = scene.elements.filter(function (element) { return element.kind === "mirror"; });
     var lenses = scene.elements.filter(function (element) { return element.kind === "lens"; });
     var targets = scene.elements.filter(function (element) { return element.kind === "target"; });
 
-    lasers.forEach(function (laser) {
-      var origin = { x: laser.position.x, y: laser.position.y };
-      var direction = G.fromAngle(laser.angleRad);
+    var rayInputs = lasers.map(function (laser) { return { sourceId: laser.id, origin: { x: laser.position.x, y: laser.position.y }, direction: G.fromAngle(laser.angleRad), wavelengthNm: laser.wavelengthNm, intensity: laser.intensity }; });
+    pointSources.forEach(function (source) { rayInputs = rayInputs.concat(pointSourceRays(source)); });
+    rayInputs.forEach(function (ray) {
+      var origin = { x: ray.origin.x, y: ray.origin.y };
+      var direction = ray.direction;
       for (var bounce = 0; bounce <= maxBounces; bounce += 1) {
         var boundary = G.rayBoundsIntersection(origin, direction, scene.bounds, epsilon);
         if (!boundary) break;
@@ -67,9 +82,9 @@
           if (hit && hit.distance < nearest.distance) nearest = { kind: "target", id: target.id, distance: hit.distance, point: hit.point, normal: hit.normal };
         });
 
-        segments.push({ from: { x: origin.x, y: origin.y }, to: { x: nearest.point.x, y: nearest.point.y }, wavelengthNm: laser.wavelengthNm, intensity: laser.intensity, terminatedBy: nearest.kind, elementId: nearest.id || null });
+        segments.push({ from: { x: origin.x, y: origin.y }, to: { x: nearest.point.x, y: nearest.point.y }, wavelengthNm: ray.wavelengthNm, intensity: ray.intensity, terminatedBy: nearest.kind, elementId: nearest.id || null, sourceId: ray.sourceId, rayIndex: ray.rayIndex == null ? 0 : ray.rayIndex });
         if (nearest.kind === "target") {
-          hits.push({ laserId: laser.id, targetId: nearest.id, point: nearest.point });
+          hits.push({ laserId: ray.sourceId, targetId: nearest.id, point: nearest.point });
           break;
         }
         if (nearest.kind === "boundary") break;

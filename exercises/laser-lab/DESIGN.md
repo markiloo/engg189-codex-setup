@@ -359,7 +359,7 @@ Simulation state, SVG rendering, and pointer input are strictly separated throug
 
 - Commit: laser-lab: record architecture decision
 
-## Task 2: Ideal Lens model
+## Task 3: Point source rays
 
 ## Architectural options
 
@@ -408,6 +408,61 @@ The rejected separate-rule approach would apply lens behavior outside the normal
 - Screenshot or observation: The simulator now exposes a Lens creation control and renders the lens as a selectable optical element. A focused trace check sends an off-axis parallel ray through a converging lens and verifies that the outgoing slope is -0.5, matching a focal point 100 units to the right of the lens center.
 
 - Commit: add ideal thin lens
+
+## Task 3: implement a point source with multiple rays
+
+## Architectural options
+  1. **Expand the bundle before the existing tracer**
+
+  Treat a point source as producing a fixed list of ordinary laser-like rays at the source
+  boundary. Each ray then enters the existing mirror, lens, target, segment, and hit pipeline.
+
+  Advantages:
+
+  - Reuses the current tracer with minimal changes.
+  - Keeps each ray independently testable.
+  - Makes stable ordering and bounded ray count straightforward.
+  - Separates measured rays from the decorative source aura.
+
+  Trade-off: The application must manage the expansion of rays from the single point source
+
+  2. **Let the tracer fan out from a point-source element**
+
+  Add point-source handling directly inside traceScene. The tracer creates several directions when it encounters the source and traces them internally.
+
+  Advantages:
+  - The source-to-ray relationship is centralized in the tracer.
+  - The scene can represent the source as one optical element.
+
+  Trade-offs:
+  - Couples source emission rules to the tracing loop.
+  - Makes ray-count and ordering behavior less explicit.
+  - Requires more changes to the existing laser-oriented pipeline.
+
+## Decision
+
+Choice: Option 1
+
+Reason: Option 1 is a more deterministic approach because by design it will have a bounded ray count and it will take advantage of existing code for the implementations. Since the point-source will be like an array of lasers, then the laser object with its functionality can be reused.
+
+## Evidence
+
+- Gate or task: **Task 3**
+
+- Browser result:
+![My Screenshot](./screenshots/Task3Test.png)
+
+- Browser result: 15 / 15 browser tests passed, including deterministic emission and lens/target pipeline regression checks.
+
+- Browser test page:
+![My Screenshot](./screenshots/Task3Browser.png)
+
+- Screenshot or observation: The simulator exposes a Point source control and renders a separate source aura; emitted rays are traced as ordinary beam segments.
+
+- Commit: laser-lab: add point source rays
+
+
+**END OF LAB**
 
 ## Revision log
 
