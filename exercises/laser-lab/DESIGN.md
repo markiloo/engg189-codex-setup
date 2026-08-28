@@ -461,6 +461,9 @@ Reason: Option 1 is a more deterministic approach because by design it will have
 
 - Commit: laser-lab: add point source rays
 
+
+**END OF LAB**
+
 ## Revision log
 
 Record what changed after an unexpected result or failed test.
