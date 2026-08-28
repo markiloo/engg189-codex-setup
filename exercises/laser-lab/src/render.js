@@ -49,6 +49,14 @@
     group.setAttribute("aria-label", "Mirror at " + Math.round(mirror.center.x) + ", " + Math.round(mirror.center.y));
   }
 
+  function renderLens(group, lens) {
+    group.setAttribute("transform", "translate(" + point(lens.center.x) + " " + point(lens.center.y) + ") rotate(" + point(degrees(lens.angleRad)) + ")");
+    group.appendChild(element("line", { class: "lens-edge", x1: 0, y1: -lens.length / 2, x2: 0, y2: lens.length / 2 }));
+    group.appendChild(element("line", { class: "lens-axis", x1: -7, y1: 0, x2: 7, y2: 0 }));
+    group.appendChild(element("circle", { class: "selection-handle", cx: 0, cy: 0, r: 4, opacity: 0.9 }));
+    group.setAttribute("aria-label", "Lens at " + Math.round(lens.center.x) + ", " + Math.round(lens.center.y));
+  }
+
   function renderTarget(group, target, trace) {
     var hit = trace.hits.some(function (item) { return item.targetId === target.id; });
     group.setAttribute("transform", "translate(" + point(target.center.x) + " " + point(target.center.y) + ")");
@@ -73,6 +81,8 @@
       layer.appendChild(element("rect", { class: "selection-outline", x: selected.position.x - 38, y: selected.position.y - 18, width: 58, height: 36, rx: 9, transform: "rotate(" + degrees(selected.angleRad) + " " + selected.position.x + " " + selected.position.y + ")" }));
     } else if (selected.kind === "target") {
       layer.appendChild(element("circle", { class: "selection-outline", cx: selected.center.x, cy: selected.center.y, r: selected.radius + 9 }));
+    } else if (selected.kind === "lens") {
+      layer.appendChild(element("rect", { class: "selection-outline", x: selected.center.x - 10, y: selected.center.y - selected.length / 2 - 10, width: 20, height: selected.length + 20, rx: 7, transform: "rotate(" + degrees(selected.angleRad) + " " + selected.center.x + " " + selected.center.y + ")" }));
     }
   }
 
@@ -87,6 +97,7 @@
       if (item.kind === "laser") renderLaser(group, item);
       if (item.kind === "mirror") renderMirror(group, item);
       if (item.kind === "target") renderTarget(group, item, trace);
+      if (item.kind === "lens") renderLens(group, item);
       if (item.id === scene.selectedId) group.classList.add("is-selected");
       elementsLayer.appendChild(group);
     });

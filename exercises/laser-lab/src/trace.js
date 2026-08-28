@@ -15,7 +15,22 @@
     return G.normalize({ x: -tangent.y, y: tangent.x });
   }
 
+  function lensEndpoints(lens) {
+    var tangent = G.fromAngle(lens.angleRad + Math.PI / 2);
+    var half = lens.length / 2;
+    return { start: G.subtract(lens.center, G.scale(tangent, half)), end: G.add(lens.center, G.scale(tangent, half)) };
+  }
+
+  function lensDirection(lens, point, incomingDirection) {
+    var opticalAxis = G.fromAngle(lens.angleRad);
+    var outgoingAxis = G.dot(incomingDirection, opticalAxis) >= 0 ? opticalAxis : G.scale(opticalAxis, -1);
+    var focalPoint = G.add(lens.center, G.scale(outgoingAxis, lens.focalLength));
+    return G.normalize(G.subtract(focalPoint, point));
+  }
+
   T.mirrorEndpoints = endpoints;
+  T.lensEndpoints = lensEndpoints;
+  T.lensDirection = lensDirection;
   T.traceScene = function (scene, options) {
     options = options || {};
     var maxBounces = options.maxBounces == null ? 8 : options.maxBounces;
@@ -24,6 +39,7 @@
     var hits = [];
     var lasers = scene.elements.filter(function (element) { return element.kind === "laser" && element.enabled !== false; });
     var mirrors = scene.elements.filter(function (element) { return element.kind === "mirror"; });
+    var lenses = scene.elements.filter(function (element) { return element.kind === "lens"; });
     var targets = scene.elements.filter(function (element) { return element.kind === "target"; });
 
     lasers.forEach(function (laser) {
@@ -40,6 +56,12 @@
           if (hit && hit.distance < nearest.distance) nearest = { kind: "mirror", id: mirror.id, distance: hit.distance, point: hit.point, normal: mirrorNormal(mirror) };
         });
 
+        lenses.forEach(function (lens) {
+          var ends = lensEndpoints(lens);
+          var hit = G.raySegmentIntersection(origin, direction, ends.start, ends.end, epsilon);
+          if (hit && hit.distance < nearest.distance) nearest = { kind: "lens", id: lens.id, distance: hit.distance, point: hit.point };
+        });
+
         targets.forEach(function (target) {
           var hit = G.rayCircleIntersection(origin, direction, target.center, target.radius, epsilon);
           if (hit && hit.distance < nearest.distance) nearest = { kind: "target", id: target.id, distance: hit.distance, point: hit.point, normal: hit.normal };
@@ -51,7 +73,8 @@
           break;
         }
         if (nearest.kind === "boundary") break;
-        direction = G.reflect(direction, nearest.normal);
+        if (nearest.kind === "mirror") direction = G.reflect(direction, nearest.normal);
+        if (nearest.kind === "lens") direction = lensDirection(lenses.filter(function (lens) { return lens.id === nearest.id; })[0], nearest.point, direction);
         origin = G.pointAt(nearest.point, direction, epsilon * 10);
       }
     });

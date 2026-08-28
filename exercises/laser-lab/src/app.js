@@ -33,7 +33,7 @@
       var item = selected();
       rootNode.querySelector("#inspector-title").textContent = item ? item.kind : "No selection";
       rootNode.querySelector("#inspector-index").textContent = item ? item.id : "—";
-      if (!item) { inspector.innerHTML = '<p class="empty-state">Select a laser, mirror, or target on the bench to inspect its parameters.</p>'; return; }
+      if (!item) { inspector.innerHTML = '<p class="empty-state">Select a laser, mirror, target, or lens on the bench to inspect its parameters.</p>'; return; }
       var html = '';
       if (item.kind === "laser") {
         html += control("X position", "x", Math.round(item.position.x), 20, 940, 1, "number");
@@ -51,6 +51,13 @@
         html += control("X position", "x", Math.round(item.center.x), 20, 940, 1, "number");
         html += control("Y position", "y", Math.round(item.center.y), 20, 520, 1, "number");
         html += control("Radius", "radius", Math.round(item.radius), 10, 60, 1);
+      }
+      if (item.kind === "lens") {
+        html += control("X position", "x", Math.round(item.center.x), 20, 940, 1, "number");
+        html += control("Y position", "y", Math.round(item.center.y), 20, 520, 1, "number");
+        html += control("Angle", "angle", degrees(item.angleRad), -180, 180, 1);
+        html += control("Length", "length", Math.round(item.length), 40, 260, 1);
+        html += control("Focal length", "focalLength", Math.round(item.focalLength), -500, 500, 1, "number");
       }
       html += '<div class="inspector-divider"></div><p class="inspector-note">Use arrow keys to nudge. Press Q or E to rotate. The current model uses ideal geometric rays.</p><button class="delete-button" data-action="delete">Remove ' + esc(item.kind) + '</button>';
       inspector.innerHTML = html;

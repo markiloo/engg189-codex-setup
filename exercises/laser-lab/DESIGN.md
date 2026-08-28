@@ -359,6 +359,56 @@ Simulation state, SVG rendering, and pointer input are strictly separated throug
 
 - Commit: laser-lab: record architecture decision
 
+## Task 2: Ideal Lens model
+
+## Architectural options
+
+1. **Lens as a scene element handled inside trace.js — recommended**
+
+Add a lens element with:
+
+```javascript
+{ id, kind: "lens", center, angleRad, length, focalLength }
+```
+The lens is a finite line segment. When a ray intersects it, calculate the intersection’s signed height from the
+optical axis and redirect the ray toward the focal point on the outgoing side. Positive focal length means a
+converging lens; negative means diverging. This reuses the existing nearest-intersection and segment pipeline
+cleanly.
+
+2. **Separate lens rule after existing intersections**
+
+Keep lenses outside the normal scene-element collision set and apply a dedicated optical rule after a ray reaches a
+predetermined lens plane. This keeps the existing intersection logic mostly unchanged, but makes lens placement, selection, rendering, and future interactions less consistent with mirrors and targets.
+
+## Decision
+
+Choice: Option 1 - Lens as scene element
+
+Reason: This will remain consistent with the program structure and allows code to be reused to prevent the duplication or creation of functions with similar functions.
+
+### Bounded model
+
+- The lens is a finite vertical segment when `angleRad` is zero. Its local horizontal direction is the optical axis; rotating the element rotates both the segment and axis.
+- Positive `focalLength` means a converging lens and negative `focalLength` means a diverging lens.
+- An incoming ray is represented by its origin and normalized direction, as in the existing tracer. At the lens intersection, the outgoing direction points from the hit point to the signed focal point on the outgoing side of the lens.
+- The lens uses the existing nearest-intersection and segment pipeline. It does not create extra rays, alter intensity, or model thickness, refraction, chromatic effects, or aberration.
+
+The rejected separate-rule approach would apply lens behavior outside the normal scene-element intersection path. It was rejected because it would make placement, selection, rendering, and future interaction inconsistent with the existing optical elements.
+
+## Evidence
+
+- Gate or task: **Task 2**
+- Browser test page:
+![My Screenshot](./screenshots/Task2Browser.png)
+
+- Browser result:
+![My Screenshot](./screenshots/Task2Test.png)
+
+
+- Screenshot or observation: The simulator now exposes a Lens creation control and renders the lens as a selectable optical element. A focused trace check sends an off-axis parallel ray through a converging lens and verifies that the outgoing slope is -0.5, matching a focal point 100 units to the right of the lens center.
+
+- Commit: add ideal thin lens
+
 ## Revision log
 
 Record what changed after an unexpected result or failed test.

@@ -126,6 +126,8 @@ svg .optical-element { cursor: grab; outline: none; }
 svg .optical-element:active { cursor: grabbing; }
 svg .mirror-face { fill: #a9d6e3; stroke: #effbff; stroke-width: 2; }
 svg .mirror-back { stroke: #415b63; stroke-width: 9; }
+svg .lens-edge { stroke: #9ee8f4; stroke-width: 7; opacity: 0.9; filter: drop-shadow(0 0 5px rgba(120, 224, 240, 0.65)); }
+svg .lens-axis { stroke: #effcff; stroke-width: 2; opacity: 0.8; }
 svg .laser-body { fill: #dbecef; stroke: #f8ffff; stroke-width: 2; filter: drop-shadow(0 0 5px rgba(193, 255, 61, 0.18)); }
 svg .laser-stripe { fill: var(--green); }
 svg .laser-aura { fill: url(#laser-aura); opacity: 0.95; }
