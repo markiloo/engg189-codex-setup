@@ -57,6 +57,14 @@
     group.setAttribute("aria-label", "Lens at " + Math.round(lens.center.x) + ", " + Math.round(lens.center.y));
   }
 
+  function renderPointSource(group, source) {
+    group.setAttribute("transform", "translate(" + point(source.position.x) + " " + point(source.position.y) + ") rotate(" + point(degrees(source.angleRad)) + ")");
+    group.appendChild(element("circle", { class: "point-source-aura", cx: 0, cy: 0, r: 20 }));
+    group.appendChild(element("circle", { class: "point-source-core", cx: 0, cy: 0, r: 7 }));
+    group.appendChild(element("circle", { class: "selection-handle", cx: 0, cy: 0, r: 4, opacity: 0.9 }));
+    group.setAttribute("aria-label", "Point source at " + Math.round(source.position.x) + ", " + Math.round(source.position.y));
+  }
+
   function renderTarget(group, target, trace) {
     var hit = trace.hits.some(function (item) { return item.targetId === target.id; });
     group.setAttribute("transform", "translate(" + point(target.center.x) + " " + point(target.center.y) + ")");
@@ -83,6 +91,8 @@
       layer.appendChild(element("circle", { class: "selection-outline", cx: selected.center.x, cy: selected.center.y, r: selected.radius + 9 }));
     } else if (selected.kind === "lens") {
       layer.appendChild(element("rect", { class: "selection-outline", x: selected.center.x - 10, y: selected.center.y - selected.length / 2 - 10, width: 20, height: selected.length + 20, rx: 7, transform: "rotate(" + degrees(selected.angleRad) + " " + selected.center.x + " " + selected.center.y + ")" }));
+    } else if (selected.kind === "point-source") {
+      layer.appendChild(element("circle", { class: "selection-outline", cx: selected.position.x, cy: selected.position.y, r: 29 }));
     }
   }
 
@@ -98,6 +108,7 @@
       if (item.kind === "mirror") renderMirror(group, item);
       if (item.kind === "target") renderTarget(group, item, trace);
       if (item.kind === "lens") renderLens(group, item);
+      if (item.kind === "point-source") renderPointSource(group, item);
       if (item.id === scene.selectedId) group.classList.add("is-selected");
       elementsLayer.appendChild(group);
     });

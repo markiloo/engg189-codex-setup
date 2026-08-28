@@ -33,7 +33,7 @@
       var item = selected();
       rootNode.querySelector("#inspector-title").textContent = item ? item.kind : "No selection";
       rootNode.querySelector("#inspector-index").textContent = item ? item.id : "—";
-      if (!item) { inspector.innerHTML = '<p class="empty-state">Select a laser, mirror, target, or lens on the bench to inspect its parameters.</p>'; return; }
+      if (!item) { inspector.innerHTML = '<p class="empty-state">Select a laser, mirror, target, lens, or point source on the bench to inspect its parameters.</p>'; return; }
       var html = '';
       if (item.kind === "laser") {
         html += control("X position", "x", Math.round(item.position.x), 20, 940, 1, "number");
@@ -59,6 +59,13 @@
         html += control("Length", "length", Math.round(item.length), 40, 260, 1);
         html += control("Focal length", "focalLength", Math.round(item.focalLength), -500, 500, 1, "number");
       }
+      if (item.kind === "point-source") {
+        html += control("X position", "x", Math.round(item.position.x), 20, 940, 1, "number");
+        html += control("Y position", "y", Math.round(item.position.y), 20, 520, 1, "number");
+        html += control("Angle", "angle", degrees(item.angleRad), -180, 180, 1);
+        html += control("Spread", "spread", Math.round(item.spreadRad * 180 / Math.PI), 0, 90, 1, "number");
+        html += control("Ray count", "rayCount", item.rayCount, 3, 7, 1, "number");
+      }
       html += '<div class="inspector-divider"></div><p class="inspector-note">Use arrow keys to nudge. Press Q or E to rotate. The current model uses ideal geometric rays.</p><button class="delete-button" data-action="delete">Remove ' + esc(item.kind) + '</button>';
       inspector.innerHTML = html;
       Array.prototype.forEach.call(inspector.querySelectorAll("[data-field]"), function (input) { input.addEventListener("input", onFieldInput); });
@@ -71,6 +78,7 @@
       if (field === "x" || field === "y") {
         var position = item.position || item.center; position = { x: position.x, y: position.y }; position[field] = value; patch[item.position ? "position" : "center"] = position;
       } else if (field === "angle") patch.angleRad = value * Math.PI / 180;
+      else if (field === "spread") patch.spreadRad = value * Math.PI / 180;
       else patch[field] = value;
       setScene(S.updateElement(scene, item.id, patch));
     }

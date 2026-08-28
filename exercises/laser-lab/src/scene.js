@@ -33,7 +33,7 @@
       scene.elements.forEach(function (element) {
         if (!element.id || ids[element.id]) errors.push("element ids must be unique");
         ids[element.id] = true;
-        if (["laser", "mirror", "target", "lens"].indexOf(element.kind) < 0) errors.push("unsupported element kind");
+        if (["laser", "mirror", "target", "lens", "point-source"].indexOf(element.kind) < 0) errors.push("unsupported element kind");
       });
     }
     return { ok: errors.length === 0, errors: errors };
@@ -57,6 +57,7 @@
     if (kind === "mirror") element = { id: "mirror-" + index, kind: "mirror", center: { x: 520, y: 230 + index * 20 }, angleRad: -Math.PI / 4, length: 128 };
     if (kind === "target") element = { id: "target-" + index, kind: "target", center: { x: 760, y: 170 + index * 18 }, radius: 24 };
     if (kind === "lens") element = { id: "lens-" + index, kind: "lens", center: { x: 520, y: 270 }, angleRad: 0, length: 160, focalLength: 140 };
+    if (kind === "point-source") element = { id: "point-source-" + index, kind: "point-source", position: { x: 180, y: 270 }, angleRad: 0, spreadRad: Math.PI / 8, rayCount: 5, wavelengthNm: 635, intensity: 1, enabled: true };
     if (!element) return next;
     next.elements.push(element);
     next.selectedId = element.id;
